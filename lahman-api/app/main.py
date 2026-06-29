@@ -24,6 +24,7 @@ class AnswerResult(BaseModel):
     category: str
     count: int
     players: list[Player]
+    sql: str | None = None
 
 
 class BatchRequest(BaseModel):

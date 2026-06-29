@@ -113,7 +113,17 @@ def _team_award_ctes(team_cond, award_cond) -> tuple[str, dict]:
 
 
 def _empty(question: str, category: str) -> dict:
-    return {"question": question, "category": category, "count": 0, "players": []}
+    return {"question": question, "category": category, "count": 0, "players": [], "sql": None}
+
+
+def _render_sql_display(sql: str, params: dict) -> str:
+    """Interpolate psycopg params into SQL for human-readable display only."""
+    result = sql
+    for key, value in params.items():
+        placeholder = f"%({key})s"
+        replacement = f"'{value}'" if isinstance(value, str) else str(value)
+        result = result.replace(placeholder, replacement)
+    return result
 
 
 def build(question: str, limit: int = 100, obscure: bool = False):
@@ -169,4 +179,5 @@ async def answer(question: str, limit: int = 100, obscure: bool = False) -> dict
         "category": category,
         "count": len(rows),
         "players": rows,
+        "sql": _render_sql_display(sql, params),
     }
