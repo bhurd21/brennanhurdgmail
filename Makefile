@@ -53,4 +53,4 @@ deploy-db:
 # Checks that the People table has rows, which is loaded near the start of init.
 wait-db:
 	@echo "Waiting for prod DB to finish initializing..."
-	@kamal server exec "until docker exec lahman-db-prod psql -U postgres -d lahman -c 'SELECT 1 FROM \"People\" LIMIT 1' > /dev/null 2>&1; do printf '.'; sleep 5; done && echo ' ready'"
+	@until kamal server exec "docker exec lahman-db-prod psql -U postgres -d lahman -c 'SELECT 1 FROM people LIMIT 1'" > /dev/null 2>&1; do printf '.'; sleep 10; done && echo " ready"
