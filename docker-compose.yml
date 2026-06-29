@@ -1,0 +1,40 @@
+# Full stack for local development.
+#
+# First-time setup — build the base DB image from v1 (has the CSVs):
+#   docker build -t lahman-db ../lahman-api/lahman-db
+#
+# Then start the stack:
+#   docker compose up --build
+#   curl "localhost:8000/answer?question=Boston Red Sox + Gold Glove"
+#
+# The v2 DB image extends lahman-db with the lookup views (03_views.sql).
+# Uses a separate volume so v1 and v2 DBs don't collide.
+services:
+  db:
+    build: ./lahman-db
+    image: lahman-db-v2
+    environment:
+      POSTGRES_PASSWORD: lahman
+      POSTGRES_DB: lahman
+    ports:
+      - "5544:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lahman"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - lahman_pgdata_v2:/var/lib/postgresql/data
+
+  api:
+    build: ./lahman-api
+    environment:
+      DATABASE_URL: postgresql://postgres:lahman@db:5432/lahman
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  lahman_pgdata_v2:

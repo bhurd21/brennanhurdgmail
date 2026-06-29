@@ -1,0 +1,40 @@
+service: lahman-api
+image: hurdb/lahman-api
+
+servers:
+  web:
+    - 66.179.136.39
+
+# SSL via Let's Encrypt through kamal-proxy.
+proxy:
+  app_port: 8000
+  ssl: true
+  hosts:
+    - brennanhurdgmail.com
+
+registry:
+  server: localhost:5555
+  username: hurdb
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+
+ssh:
+  user: root
+  keys:
+    - /Users/brennan/.ssh/id_ed25519
+
+# DATABASE_URL points to the Postgres container running on the server.
+# Set it up once on the server (see README), then it persists via Docker volume.
+env:
+  secret:
+    - DATABASE_URL
+  clear:
+    LOG_LEVEL: info
+
+aliases:
+  logs: app logs -f
+  shell: app exec --interactive --reuse "bash"
+  console: app exec --interactive --reuse "python -c 'import app'"
