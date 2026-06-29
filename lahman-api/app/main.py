@@ -49,6 +49,11 @@ app = FastAPI(
 )
 
 
+@app.get("/up")
+async def up():
+    return {"status": "ok"}
+
+
 @app.get("/health")
 async def health():
     return {"ok": await db.ping()}

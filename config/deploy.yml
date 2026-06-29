@@ -1,5 +1,5 @@
 service: lahman-api
-image: hurdb/lahman-api
+image: hurdbr/lahman-api
 
 servers:
   web:
@@ -13,13 +13,14 @@ proxy:
     - brennanhurdgmail.com
 
 registry:
-  server: localhost:5555
-  username: hurdb
+  username: hurdbr
   password:
     - KAMAL_REGISTRY_PASSWORD
 
 builder:
   arch: amd64
+  dockerfile: lahman-api/Dockerfile
+  context: lahman-api
 
 ssh:
   user: root
