@@ -27,7 +27,7 @@ appear_agg AS (
 ranked AS (
     SELECT
         p."bbrefID"                                  AS bbref_id,
-        btrim(p."nameFirst" || ' ' || p."nameLast")  AS name,
+        btrim(replace(replace(p."nameFirst", '. ', ''), '.', '') || ' ' || p."nameLast") AS name,
         CASE WHEN p."debut" IS NOT NULL THEN
             EXTRACT(YEAR FROM p."debut")::int::text ||
             CASE
