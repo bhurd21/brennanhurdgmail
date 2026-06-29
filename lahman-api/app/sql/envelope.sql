@@ -28,13 +28,16 @@ ranked AS (
     SELECT
         p."bbrefID"                                  AS bbref_id,
         btrim(p."nameFirst" || ' ' || p."nameLast")  AS name,
-        CASE
-            WHEN p."debut" IS NOT NULL AND p."finalGame" IS NOT NULL
-            THEN EXTRACT(YEAR FROM p."debut")::int || '-' ||
-                 EXTRACT(YEAR FROM p."finalGame")::int
-            WHEN p."debut" IS NOT NULL
-            THEN EXTRACT(YEAR FROM p."debut")::int || '-' ||
-                 COALESCE(aa.last_season::text, '')
+        CASE WHEN p."debut" IS NOT NULL THEN
+            EXTRACT(YEAR FROM p."debut")::int::text ||
+            CASE
+                WHEN COALESCE(EXTRACT(YEAR FROM p."finalGame")::int, aa.last_season)
+                     IS NULL
+                  OR COALESCE(EXTRACT(YEAR FROM p."finalGame")::int, aa.last_season)
+                   = EXTRACT(YEAR FROM p."debut")::int
+                THEN ''
+                ELSE '-' || COALESCE(EXTRACT(YEAR FROM p."finalGame")::int, aa.last_season)::text
+            END
         END                                          AS career,
         pos.position                                 AS position,
         COALESCE(aa.career_games, 0)                 AS career_games,
