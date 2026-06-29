@@ -1,14 +1,7 @@
 # Full stack for local development.
 #
-# First-time setup — build the base DB image from v1 (has the CSVs):
-#   docker build -t lahman-db ../lahman-api/lahman-db
-#
-# Then start the stack:
 #   docker compose up --build
 #   curl "localhost:8000/answer?question=Boston Red Sox + Gold Glove"
-#
-# The v2 DB image extends lahman-db with the lookup views (03_views.sql).
-# Uses a separate volume so v1 and v2 DBs don't collide.
 services:
   db:
     build: ./lahman-db
