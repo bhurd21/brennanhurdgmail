@@ -33,8 +33,6 @@ These conditions appear on real Immaculate Grids but are not implemented because
 
 - **6+ WAR Season / 40+ WAR Career** — no WAR data in Lahman (Baseball Reference proprietary)
 - **First Round Draft Pick** — no draft data in Lahman
-- **Threw a No-Hitter** — no no-hitter log in Lahman
-- **Played In Major Negro Leagues** — Lahman does not have comprehensive Negro League data
 
 Questions containing these conditions return `"category": "unmatched"` with an empty player list.
 
