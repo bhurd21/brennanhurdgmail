@@ -41,31 +41,21 @@ _TEAM_STAT = {
 }
 
 
-def _drop_floor(fields: dict, obscure: bool) -> dict:
-    """In obscure mode, blank the rate-stat playing-time floor so marginal
-    players that would normally be filtered out are surfaced."""
-    fields = dict(fields)
-    if obscure and "floor_clause" in fields:
-        fields["floor_clause"] = ""
-    return fields
-
-
 def _is_season_stat(cond: classifiers.Condition) -> bool:
     return cond.category == "stat" and '"yearID"' in cond.fields.get("group", "")
 
 
-def _build_side(cond: classifiers.Condition, prefix: str, obscure: bool) -> tuple[str, dict]:
+def _build_side(cond: classifiers.Condition, prefix: str) -> tuple[str, dict]:
     """Render one condition's SQL with its params namespaced (a_/b_)."""
-    fields = _drop_floor(cond.fields, obscure)
-    sql = _fragment(cond.fragment).format(p=prefix, **fields)
+    sql = _fragment(cond.fragment).format(p=prefix, **cond.fields)
     params = {f"{prefix}{k}": v for k, v in cond.params.items()}
     return sql, params
 
 
 def _normal_ctes(cond_a, cond_b, obscure: bool) -> tuple[str, dict]:
     """Two independent condition fragments, INTERSECTed on playerID."""
-    frag_a, pa = _build_side(cond_a, "a_", obscure)
-    frag_b, pb = _build_side(cond_b, "b_", obscure)
+    frag_a, pa = _build_side(cond_a, "a_")
+    frag_b, pb = _build_side(cond_b, "b_")
     ctes = (
         f"cond_a AS (\n{frag_a}\n),\n"
         f"cond_b AS (\n{frag_b}\n),\n"
@@ -81,12 +71,33 @@ def _normal_ctes(cond_a, cond_b, obscure: bool) -> tuple[str, dict]:
 def _combined_ctes(team_cond, stat_cond, obscure: bool) -> tuple[str, dict]:
     """Team + single-season stat tied into one query (the season stat must be
     achieved WITH that team). Params use a fixed `c_` prefix."""
-    fields = _drop_floor(stat_cond.fields, obscure)
-    body = _fragment(_TEAM_STAT[stat_cond.fragment]).format(**fields)
+    body = _fragment(_TEAM_STAT[stat_cond.fragment]).format(**stat_cond.fields)
     params = {"c_team_name": team_cond.params["team_name"]}
     params.update({f"c_{k}": v for k, v in stat_cond.params.items()})
     # The combined query yields one row per qualifying season; dedup to one row
     # per player (INTERSECT in the normal path dedups for free).
+    ctes = (
+        f"qualifying AS (\n{body}\n),\n"
+        'matched_ids AS (\n    SELECT DISTINCT "playerID" FROM qualifying\n),\n'
+    )
+    return ctes, params
+
+
+def _team_position_ctes(team_cond, pos_cond) -> tuple[str, dict]:
+    """Position played in a game for this specific team (grid rule)."""
+    body = _fragment("team_position").format(col=pos_cond.fields["col"])
+    params = {"c_team_name": team_cond.params["team_name"]}
+    ctes = (
+        f"qualifying AS (\n{body}\n),\n"
+        'matched_ids AS (\n    SELECT DISTINCT "playerID" FROM qualifying\n),\n'
+    )
+    return ctes, params
+
+
+def _team_ws_champ_ctes(team_cond) -> tuple[str, dict]:
+    """WS Champ tied to team: player appeared for that team in its WS-winning season."""
+    body = _fragment("team_ws_champ")
+    params = {"c_team_name": team_cond.params["team_name"]}
     ctes = (
         f"qualifying AS (\n{body}\n),\n"
         'matched_ids AS (\n    SELECT DISTINCT "playerID" FROM qualifying\n),\n'
@@ -154,6 +165,14 @@ def build(question: str, limit: int = 100, obscure: bool = False):
         ctes, params = _team_award_ctes(cond_a, cond_b)
     elif cond_b.category == "team" and cond_a.category == "award":
         ctes, params = _team_award_ctes(cond_b, cond_a)
+    elif cond_a.category == "team" and cond_b.category == "position":
+        ctes, params = _team_position_ctes(cond_a, cond_b)
+    elif cond_b.category == "team" and cond_a.category == "position":
+        ctes, params = _team_position_ctes(cond_b, cond_a)
+    elif cond_a.category == "team" and cond_b.category == "player" and cond_b.fragment == "ws_champ":
+        ctes, params = _team_ws_champ_ctes(cond_a)
+    elif cond_b.category == "team" and cond_a.category == "player" and cond_a.fragment == "ws_champ":
+        ctes, params = _team_ws_champ_ctes(cond_b)
     else:
         ctes, params = _normal_ctes(cond_a, cond_b, obscure)
 

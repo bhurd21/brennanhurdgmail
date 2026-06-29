@@ -75,12 +75,10 @@ STAT_LOOKUP = {
     "AVG": {
         "kind": "rate", "table": "Batting", "op": ">=",
         "rate": 'SUM("H")::numeric / NULLIF(SUM("AB"), 0)',
-        "floor_col": "AB", "floor_season": 200, "floor_career": 1000,
     },
     "ERA": {
         "kind": "rate", "table": "Pitching", "op": "<=",
         "rate": 'SUM("ER")::numeric * 27 / NULLIF(SUM("IPouts"), 0)',
-        "floor_col": "IPouts", "floor_season": 150, "floor_career": 1500,
     },
 }
 

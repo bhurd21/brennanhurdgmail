@@ -2,7 +2,6 @@
 -- using only this team's portion of the season (e.g. Jeff Samardzija 2014 had a
 -- 3.14 ERA with Oakland -> does not match "Oakland + <= 3.00 ERA Season", even
 -- though his combined ERA was 2.99). v_team_lookup resolves the display name.
--- {floor_clause} is blanked by the engine for sort=irrelevant.
 SELECT b."playerID"
 FROM {table} b
 JOIN (
@@ -13,4 +12,3 @@ JOIN (
 ) ft ON ft."yearID" = b."yearID" AND ft."teamID" = b."teamID"
 GROUP BY b."playerID", b."yearID"
 HAVING {rate} {op} %(c_value)s
-{floor_clause}

@@ -115,14 +115,10 @@ def classify_stat(text: str) -> Condition | None:
                     "col": stat["col"], "op": stat["op"]},
             params={"value": value},
         )
-    # Rate stat (AVG / ERA) with a playing-time floor. The floor is a prebuilt
-    # clause so the engine can drop it wholesale in obscure mode.
-    floor = stat["floor_season"] if timeframe.lower() == "season" else stat["floor_career"]
-    floor_clause = f'AND SUM("{stat["floor_col"]}") >= {floor}'
     return Condition(
         "stat", "stat_rate",
         fields={"table": stat["table"], "group": group, "rate": stat["rate"],
-                "op": stat["op"], "floor_clause": floor_clause},
+                "op": stat["op"]},
         params={"value": value},
     )
 
