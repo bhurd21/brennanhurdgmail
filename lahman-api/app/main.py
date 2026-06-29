@@ -1,9 +1,12 @@
 """FastAPI surface. Thin: models, routes, lifespan. Logic lives in engine.py."""
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from . import db, engine, lookups
 
@@ -36,6 +39,8 @@ async def lifespan(app: FastAPI):
     await db.pool.close()
 
 
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="Lahman Immaculate-Grid API",
     version="2.0.0",
@@ -43,11 +48,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type"],
 )
 
 
@@ -62,7 +70,9 @@ async def health():
 
 
 @app.get("/answer", response_model=AnswerResult)
+@limiter.limit("30/minute")
 async def answer(
+    request: Request,
     question: str = Query(..., examples=["Washington Nationals + 300+ HR Career Batting"]),
     limit: int = Query(100, ge=1, le=500),
     obscure: bool = Query(False, description="True = most obscure players first"),
@@ -71,7 +81,8 @@ async def answer(
 
 
 @app.post("/answers", response_model=list[AnswerResult])
-async def answers(req: BatchRequest):
+@limiter.limit("10/minute")
+async def answers(request: Request, req: BatchRequest):
     return [await engine.answer(q, limit=req.limit, obscure=req.obscure) for q in req.questions]
 
 
