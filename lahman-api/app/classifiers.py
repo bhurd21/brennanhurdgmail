@@ -80,28 +80,30 @@ def classify_position(text: str) -> Condition | None:
     return Condition("position", "position", fields={"col": col})
 
 
-def classify_stat(text: str) -> Condition | None:
-    # Compound stat first ("30+ HR / 30+ SB Season Batting").
-    compound_match = _COMPOUND_RE.search(text)
-    if compound_match:
-        threshold1, stat_tok1, threshold2, stat_tok2, timeframe = compound_match.groups()
-        stat1 = lookups.STAT_LOOKUP.get(stat_tok1.upper())
-        stat2 = lookups.STAT_LOOKUP.get(stat_tok2.upper())
-        if not (stat1 and stat2 and stat1["kind"] == "count" and stat2["kind"] == "count"):
-            return None
-        return Condition(
-            "stat", "stat_compound",
-            fields={"table": stat1["table"], "group": _group(timeframe),
-                    "col1": stat1["col"], "col2": stat2["col"]},
-            params={"v1": _parse_value(threshold1), "v2": _parse_value(threshold2)},
-        )
+def classify_compound_stat(text: str) -> Condition | None:
+    m = _COMPOUND_RE.search(text)
+    if not m:
+        return None
+    threshold1, stat_tok1, threshold2, stat_tok2, timeframe = m.groups()
+    stat1 = lookups.STAT_LOOKUP.get(stat_tok1.upper())
+    stat2 = lookups.STAT_LOOKUP.get(stat_tok2.upper())
+    if not (stat1 and stat2 and stat1["kind"] == "count" and stat2["kind"] == "count"):
+        return None
+    return Condition(
+        "stat", "stat_compound",
+        fields={"table": stat1["table"], "group": _group(timeframe),
+                "col1": stat1["col"], "col2": stat2["col"]},
+        params={"v1": _parse_value(threshold1), "v2": _parse_value(threshold2)},
+    )
 
+
+def classify_single_stat(text: str) -> Condition | None:
     if not re.search(r"\b(Season|Career)\b", text, re.I):
         return None
-    stat_match = _STAT_RE.search(text)
-    if not stat_match:
+    m = _STAT_RE.search(text)
+    if not m:
         return None
-    threshold_tok, stat_tok, timeframe = stat_match.groups()
+    threshold_tok, stat_tok, timeframe = m.groups()
     stat = lookups.STAT_LOOKUP.get(stat_tok.upper())
     if not stat:
         return None
@@ -128,7 +130,8 @@ _CLASSIFIERS = (
     classify_award,
     classify_player,
     classify_position,
-    classify_stat,
+    classify_compound_stat,
+    classify_single_stat,
 )
 
 
