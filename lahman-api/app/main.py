@@ -1,4 +1,5 @@
 """FastAPI surface. Thin: models, routes, lifespan. Logic lives in engine.py."""
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Query, Request
@@ -28,7 +29,7 @@ class AnswerResult(BaseModel):
 
 
 class BatchRequest(BaseModel):
-    questions: list[str] = Field(..., min_length=1)
+    questions: list[str] = Field(..., min_length=1, max_length=10)
     limit: int = Field(100, ge=1, le=500)
     obscure: bool = Field(False)
 
@@ -84,7 +85,7 @@ async def answer(
 @app.post("/answers", response_model=list[AnswerResult])
 @limiter.limit("10/minute")
 async def answers(request: Request, req: BatchRequest):
-    return [await engine.answer(q, limit=req.limit, obscure=req.obscure) for q in req.questions]
+    return await asyncio.gather(*[engine.answer(q, limit=req.limit, obscure=req.obscure) for q in req.questions])
 
 
 @app.get("/help")

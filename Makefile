@@ -2,7 +2,7 @@
 
 # Build the base Lahman DB image from v1 (contains the CSVs). Required once.
 build-base:
-	docker build -t lahman-db ../lahman-api/lahman-db
+	docker build -t lahman-db lahman-db
 
 # Build v2 images (run build-base first if lahman-db image doesn't exist).
 build:

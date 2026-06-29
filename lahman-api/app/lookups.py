@@ -57,7 +57,7 @@ KNOWN_AWARD_NAMES: frozenset[str] = frozenset({
 
 # Stat token (uppercased) → how to evaluate it.
 #   kind="count": HAVING SUM("col") op value
-#   kind="rate" : a computed expression with a playing-time floor
+#   kind="rate" : a computed expression (AVG, ERA)
 STAT_LOOKUP = {
     "H":     {"kind": "count", "table": "Batting",  "col": "H",   "op": ">="},
     "HITS":  {"kind": "count", "table": "Batting",  "col": "H",   "op": ">="},

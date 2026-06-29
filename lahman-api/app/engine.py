@@ -14,6 +14,7 @@ log = logging.getLogger("lahman.engine")
 
 _SQL_DIR = Path(__file__).parent / "sql"
 _SPLIT_RE = re.compile(r"\s\+\s")
+_PARAM_RE = re.compile(r"%\((\w+)\)s")
 
 
 @lru_cache(maxsize=None)
@@ -52,7 +53,7 @@ def _build_side(cond: classifiers.Condition, prefix: str) -> tuple[str, dict]:
     return sql, params
 
 
-def _normal_ctes(cond_a, cond_b, obscure: bool) -> tuple[str, dict]:
+def _normal_ctes(cond_a, cond_b) -> tuple[str, dict]:
     """Two independent condition fragments, INTERSECTed on playerID."""
     frag_a, pa = _build_side(cond_a, "a_")
     frag_b, pb = _build_side(cond_b, "b_")
@@ -68,7 +69,7 @@ def _normal_ctes(cond_a, cond_b, obscure: bool) -> tuple[str, dict]:
     return ctes, {**pa, **pb}
 
 
-def _combined_ctes(team_cond, stat_cond, obscure: bool) -> tuple[str, dict]:
+def _combined_ctes(team_cond, stat_cond) -> tuple[str, dict]:
     """Team + single-season stat tied into one query (the season stat must be
     achieved WITH that team). Params use a fixed `c_` prefix."""
     body = _fragment(_TEAM_STAT[stat_cond.fragment]).format(**stat_cond.fields)
@@ -129,12 +130,10 @@ def _empty(question: str, category: str) -> dict:
 
 def _render_sql_display(sql: str, params: dict) -> str:
     """Interpolate psycopg params into SQL for human-readable display only."""
-    result = sql
-    for key, value in params.items():
-        placeholder = f"%({key})s"
-        replacement = f"'{value}'" if isinstance(value, str) else str(value)
-        result = result.replace(placeholder, replacement)
-    return result
+    def _sub(m: re.Match) -> str:
+        value = params[m.group(1)]
+        return f"'{value}'" if isinstance(value, str) else str(value)
+    return _PARAM_RE.sub(_sub, sql)
 
 
 def build(question: str, limit: int = 100, obscure: bool = False):
@@ -159,9 +158,9 @@ def build(question: str, limit: int = 100, obscure: bool = False):
         cond_a, cond_b = cond_b, cond_a
 
     if cond_a.category != "team":
-        ctes, params = _normal_ctes(cond_a, cond_b, obscure)
+        ctes, params = _normal_ctes(cond_a, cond_b)
     elif _is_season_stat(cond_b):
-        ctes, params = _combined_ctes(cond_a, cond_b, obscure)
+        ctes, params = _combined_ctes(cond_a, cond_b)
     elif cond_b.category == "award":
         ctes, params = _team_award_ctes(cond_a, cond_b)
     elif cond_b.category == "position":
@@ -169,7 +168,7 @@ def build(question: str, limit: int = 100, obscure: bool = False):
     elif cond_b.fragment == "ws_champ":
         ctes, params = _team_ws_champ_ctes(cond_a)
     else:
-        ctes, params = _normal_ctes(cond_a, cond_b, obscure)
+        ctes, params = _normal_ctes(cond_a, cond_b)
 
     sql = _envelope().format(ctes=ctes, order=_ORDER[obscure])
     params["limit"] = limit
