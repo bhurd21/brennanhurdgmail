@@ -32,6 +32,9 @@ ranked AS (
             WHEN p."debut" IS NOT NULL AND p."finalGame" IS NOT NULL
             THEN EXTRACT(YEAR FROM p."debut")::int || '-' ||
                  EXTRACT(YEAR FROM p."finalGame")::int
+            WHEN p."debut" IS NOT NULL
+            THEN EXTRACT(YEAR FROM p."debut")::int || '-' ||
+                 COALESCE(aa.last_season::text, '')
         END                                          AS career,
         pos.position                                 AS position,
         COALESCE(aa.career_games, 0)                 AS career_games,
