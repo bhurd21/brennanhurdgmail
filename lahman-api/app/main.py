@@ -2,6 +2,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import db, engine, lookups
@@ -40,6 +41,13 @@ app = FastAPI(
     version="2.0.0",
     summary="Answers two-condition baseball grid questions from the Lahman database.",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
 )
 
 
