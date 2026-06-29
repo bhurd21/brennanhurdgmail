@@ -110,6 +110,18 @@ CASES = [
         "player_player",
         ["clemero01"],          # Roberto Clemente: HOF + born in Puerto Rico
     ),
+    (
+        "negro_leagues_player",
+        "Played In Major Negro Lgs + Hall of Fame",
+        "player_player",
+        ["paigesa01"],          # Satchel Paige: Negro Leagues + HOF
+    ),
+    (
+        "no_hitter_player",
+        "Threw a No-Hitter + Hall of Fame",
+        "player_player",
+        ["ryanno01"],           # Nolan Ryan: 7 no-hitters + HOF
+    ),
 ]
 
 

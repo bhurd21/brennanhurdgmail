@@ -47,3 +47,6 @@ COPY CollegePlaying ("playerID","schoolID","yearID")
                        FROM '/csv/CollegePlaying.csv'    WITH (FORMAT csv, HEADER true);
 COPY HomeGames         FROM '/csv/HomeGames.csv'         WITH (FORMAT csv, HEADER true);
 COPY TeamsHalf         FROM '/csv/TeamsHalf.csv'         WITH (FORMAT csv, HEADER true);
+
+-- Supplemental
+COPY NoHitters         FROM '/csv/NoHitters.csv'         WITH (FORMAT csv, HEADER true);

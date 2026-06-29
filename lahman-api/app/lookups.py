@@ -124,4 +124,6 @@ PLAYER_LOOKUP = {
     "Canada":                              ("born_country",   {"country": "CAN"}),
     "Dominican Republic":                  ("born_country",   {"country": "D.R."}),
     "Puerto Rico":                         ("born_country",   {"country": "P.R."}),
+    "Played In Major Negro Lgs":           ("negro_leagues",  {}),
+    "Threw a No-Hitter":                   ("no_hitter",      {}),
 }

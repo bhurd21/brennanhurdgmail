@@ -514,4 +514,13 @@ CREATE TABLE TeamsHalf (
     PRIMARY KEY ("yearID", "teamID", "Half")
 );
 
+-- ---------------------------------------------------------------------------
+-- Supplemental / derived data
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE NoHitters (
+    "playerID"  text NOT NULL REFERENCES People ("playerID"),
+    PRIMARY KEY ("playerID")
+);
+
 COMMIT;
