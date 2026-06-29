@@ -1,4 +1,4 @@
-.PHONY: build-base build up down test debug push-db migrate-db deploy deploy-db
+.PHONY: build-base build up down test debug push-db migrate-db deploy deploy-db wait-db
 
 # Build the base Lahman DB image from v1 (contains the CSVs). Required once.
 build-base:
@@ -46,4 +46,11 @@ migrate-db:
 deploy-db:
 	$(MAKE) push-db
 	$(MAKE) migrate-db
+	$(MAKE) wait-db
 	$(MAKE) deploy
+
+# Poll the prod DB until Postgres has finished loading all CSVs (~2 min after migrate-db).
+# Checks that the People table has rows, which is loaded near the start of init.
+wait-db:
+	@echo "Waiting for prod DB to finish initializing..."
+	@kamal server exec "until docker exec lahman-db-prod psql -U postgres -d lahman -c 'SELECT 1 FROM \"People\" LIMIT 1' > /dev/null 2>&1; do printf '.'; sleep 5; done && echo ' ready'"
