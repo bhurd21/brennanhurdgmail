@@ -153,26 +153,21 @@ def build(question: str, limit: int = 100, obscure: bool = False):
     if cond_a is None or cond_b is None:
         return None, None, "unmatched"
 
-    # Team + season stat: tie the stat to the team (grid rule). Career stats
-    # stay career-wide, so they keep the plain INTERSECT.
-    # Team + award: the award must be won in a season the player appeared for
-    # that team (grid rule).
-    if cond_a.category == "team" and _is_season_stat(cond_b):
+    # Canonicalize: if either condition is a team, make it cond_a so every
+    # team-pairing rule only needs to be written once.
+    if cond_b.category == "team":
+        cond_a, cond_b = cond_b, cond_a
+
+    if cond_a.category != "team":
+        ctes, params = _normal_ctes(cond_a, cond_b, obscure)
+    elif _is_season_stat(cond_b):
         ctes, params = _combined_ctes(cond_a, cond_b, obscure)
-    elif cond_b.category == "team" and _is_season_stat(cond_a):
-        ctes, params = _combined_ctes(cond_b, cond_a, obscure)
-    elif cond_a.category == "team" and cond_b.category == "award":
+    elif cond_b.category == "award":
         ctes, params = _team_award_ctes(cond_a, cond_b)
-    elif cond_b.category == "team" and cond_a.category == "award":
-        ctes, params = _team_award_ctes(cond_b, cond_a)
-    elif cond_a.category == "team" and cond_b.category == "position":
+    elif cond_b.category == "position":
         ctes, params = _team_position_ctes(cond_a, cond_b)
-    elif cond_b.category == "team" and cond_a.category == "position":
-        ctes, params = _team_position_ctes(cond_b, cond_a)
-    elif cond_a.category == "team" and cond_b.category == "player" and cond_b.fragment == "ws_champ":
+    elif cond_b.fragment == "ws_champ":
         ctes, params = _team_ws_champ_ctes(cond_a)
-    elif cond_b.category == "team" and cond_a.category == "player" and cond_a.fragment == "ws_champ":
-        ctes, params = _team_ws_champ_ctes(cond_b)
     else:
         ctes, params = _normal_ctes(cond_a, cond_b, obscure)
 
