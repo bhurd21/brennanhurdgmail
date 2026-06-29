@@ -523,4 +523,10 @@ CREATE TABLE NoHitters (
     PRIMARY KEY ("playerID")
 );
 
+CREATE TABLE CareerWar (
+    "playerID"   text    NOT NULL REFERENCES People ("playerID"),
+    "career_war" numeric NOT NULL,
+    PRIMARY KEY ("playerID")
+);
+
 COMMIT;

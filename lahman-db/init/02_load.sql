@@ -50,3 +50,4 @@ COPY TeamsHalf         FROM '/csv/TeamsHalf.csv'         WITH (FORMAT csv, HEADE
 
 -- Supplemental
 COPY NoHitters         FROM '/csv/NoHitters.csv'         WITH (FORMAT csv, HEADER true);
+COPY CareerWar         FROM '/csv/CareerWar.csv'         WITH (FORMAT csv, HEADER true);

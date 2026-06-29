@@ -25,6 +25,7 @@ _COMPOUND_RE = re.compile(
 )
 _STAT_RE = re.compile(r"(\.?\d+(?:\.\d+)?)\+?\s+([A-Za-z0-9]+)\s+(Season|Career)", re.I)
 _PLAYED_RE = re.compile(r"^Played\s+(.+?)\s+min\.\s+1\s+game$", re.I)
+_WAR_CAREER_RE = re.compile(r"(\d+)\+\s+WAR\s+Career", re.I)
 
 
 def _parse_value(tok: str) -> float:
@@ -97,6 +98,13 @@ def classify_compound_stat(text: str) -> Condition | None:
     )
 
 
+def classify_war(text: str) -> Condition | None:
+    m = _WAR_CAREER_RE.search(text)
+    if not m:
+        return None
+    return Condition("stat", "war_career", params={"value": float(m.group(1))})
+
+
 def classify_single_stat(text: str) -> Condition | None:
     if not re.search(r"\b(Season|Career)\b", text, re.I):
         return None
@@ -130,6 +138,7 @@ _CLASSIFIERS = (
     classify_award,
     classify_player,
     classify_position,
+    classify_war,
     classify_compound_stat,
     classify_single_stat,
 )
