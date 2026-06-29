@@ -94,6 +94,24 @@ def _combined_ctes(team_cond, stat_cond, obscure: bool) -> tuple[str, dict]:
     return ctes, params
 
 
+def _team_award_ctes(team_cond, award_cond) -> tuple[str, dict]:
+    """Award won in a season the player appeared for this team (grid rule)."""
+    if award_cond.fragment == "allstar":
+        body = _fragment("team_allstar")
+        params = {"c_team_name": team_cond.params["team_name"]}
+    else:
+        body = _fragment("team_award")
+        params = {
+            "c_team_name":  team_cond.params["team_name"],
+            "c_award_name": award_cond.params["award_name"],
+        }
+    ctes = (
+        f"qualifying AS (\n{body}\n),\n"
+        'matched_ids AS (\n    SELECT DISTINCT "playerID" FROM qualifying\n),\n'
+    )
+    return ctes, params
+
+
 def _empty(question: str, category: str) -> dict:
     return {"question": question, "category": category, "count": 0, "players": []}
 
@@ -114,12 +132,18 @@ def build(question: str, limit: int = 100, obscure: bool = False):
     if cond_a is None or cond_b is None:
         return None, None, "unmatched"
 
-    # Team + single-season stat: tie the stat to the team (grid rule). Career
-    # stats stay career-wide, so they keep the plain INTERSECT.
+    # Team + season stat: tie the stat to the team (grid rule). Career stats
+    # stay career-wide, so they keep the plain INTERSECT.
+    # Team + award: the award must be won in a season the player appeared for
+    # that team (grid rule).
     if cond_a.category == "team" and _is_season_stat(cond_b):
         ctes, params = _combined_ctes(cond_a, cond_b, obscure)
     elif cond_b.category == "team" and _is_season_stat(cond_a):
         ctes, params = _combined_ctes(cond_b, cond_a, obscure)
+    elif cond_a.category == "team" and cond_b.category == "award":
+        ctes, params = _team_award_ctes(cond_a, cond_b)
+    elif cond_b.category == "team" and cond_a.category == "award":
+        ctes, params = _team_award_ctes(cond_b, cond_a)
     else:
         ctes, params = _normal_ctes(cond_a, cond_b, obscure)
 
