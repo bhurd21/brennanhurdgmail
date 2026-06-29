@@ -5,7 +5,7 @@ Like hurdb's debug_service.rb: shows the full pipeline for one question
 (split → classify → SQL → results) so failures are easy to pinpoint.
 
 Usage (from lahman-api-v2/lahman-api/):
-    uv run python scripts/debug_question.py "Silver Slugger + 300+ HR Career Batting"
+    uv run python scripts/debug_question.py "Washington Nationals + 300+ HR Career Batting"
 
 DATABASE_URL defaults to localhost:5544 (docker-compose dev stack).
 Override: DATABASE_URL=postgresql://... uv run python scripts/debug_question.py "..."

@@ -1,16 +1,10 @@
 """FastAPI surface. Thin: models, routes, lifespan. Logic lives in engine.py."""
 from contextlib import asynccontextmanager
-from enum import Enum
 
 from fastapi import FastAPI, Query
 from pydantic import BaseModel, Field
 
 from . import db, engine, lookups
-
-
-class Sort(str, Enum):
-    relevant = "relevant"      # most prominent players first (default)
-    irrelevant = "irrelevant"  # most obscure first; also drops the rate-stat floor
 
 
 class Player(BaseModel):
@@ -31,7 +25,7 @@ class AnswerResult(BaseModel):
 class BatchRequest(BaseModel):
     questions: list[str] = Field(..., min_length=1)
     limit: int = Field(100, ge=1, le=500)
-    sort: Sort = Sort.relevant
+    obscure: bool = Field(False)
 
 
 @asynccontextmanager
@@ -61,23 +55,23 @@ async def health():
 
 @app.get("/answer", response_model=AnswerResult)
 async def answer(
-    question: str = Query(..., examples=["New York Yankees + 300+ HR Career Batting"]),
+    question: str = Query(..., examples=["Washington Nationals + 300+ HR Career Batting"]),
     limit: int = Query(100, ge=1, le=500),
-    sort: Sort = Sort.relevant,
+    obscure: bool = Query(False, description="True = most obscure players first"),
 ):
-    return await engine.answer(question, limit=limit, sort=sort.value)
+    return await engine.answer(question, limit=limit, obscure=obscure)
 
 
 @app.post("/answers", response_model=list[AnswerResult])
 async def answers(req: BatchRequest):
-    return [await engine.answer(q, limit=req.limit, sort=req.sort.value) for q in req.questions]
+    return [await engine.answer(q, limit=req.limit, obscure=req.obscure) for q in req.questions]
 
 
 @app.get("/help")
 async def help():
     """The supported condition vocabulary, for building/validating questions."""
     return {
-        "format": "Two conditions joined by ' + ', e.g. 'Boston Red Sox + Gold Glove'.",
+        "format": "Two conditions joined by ' + ', e.g. 'Washington Nationals + Gold Glove'.",
         "teams": sorted(lookups.KNOWN_TEAM_NAMES),
         "awards": sorted(lookups.KNOWN_AWARD_NAMES),
         "player_flags": sorted(lookups.PLAYER_LOOKUP),

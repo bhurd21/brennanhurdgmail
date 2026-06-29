@@ -28,9 +28,9 @@ CASES = [
     ),
     (
         "award_team",
-        "All Star + New York Yankees",
+        "All Star + Washington Nationals",
         "award_team",
-        ["jeterde01"],          # Derek Jeter: 14 All Stars as a Yankee
+        ["harpebr03"],          # Bryce Harper: 6 All Stars as a National
     ),
     (
         "award_position",
@@ -52,15 +52,15 @@ CASES = [
     ),
     (
         "team_stat_career",
-        "New York Yankees + 300+ HR Career Batting",
+        "Washington Nationals + 300+ HR Career Batting",
         "stat_team",
-        ["ruthba01"],           # Babe Ruth: 714 HR, career as a Yankee
+        ["dawsoan01"],          # Andre Dawson: 438 HR, played for Expos/Nationals
     ),
     (
         "team_stat_season_combined",
-        "New York Yankees + 40+ HR Season Batting",
+        "Washington Nationals + 40+ HR Season Batting",
         "stat_team",
-        ["ruthba01"],           # Ruth had many 40+ HR seasons as a Yankee
+        ["soriaal01"],          # Alfonso Soriano: 46 HR in 2006 as a National
     ),
     (
         "team_position",
@@ -70,9 +70,9 @@ CASES = [
     ),
     (
         "team_player",
-        "New York Yankees + Hall of Fame",
+        "Washington Nationals + Hall of Fame",
         "player_team",
-        ["ruthba01"],           # Babe Ruth: Yankee + HOF
+        ["guerrvl01"],          # Vladimir Guerrero: Expos/Nationals + HOF
     ),
     (
         "stat_stat",

@@ -25,8 +25,8 @@ def run(conn):
     """run(question) -> (category, [player dicts]); composes SQL then executes."""
     from app import engine
 
-    def _run(question: str, limit: int = 100, sort: str = "relevant"):
-        sql, params, category = engine.build(question, limit, sort)
+    def _run(question: str, limit: int = 100, obscure: bool = False):
+        sql, params, category = engine.build(question, limit, obscure)
         if sql is None:
             return category, []
         with conn.cursor(row_factory=dict_row) as cur:

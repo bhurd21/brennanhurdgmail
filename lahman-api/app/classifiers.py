@@ -28,10 +28,12 @@ _PLAYED_RE = re.compile(r"^Played\s+(.+?)\s+min\.\s+1\s+game$", re.I)
 
 
 def _parse_value(tok: str) -> float:
+    """Parse a threshold token like '300', '.300', or '3.00' into a float."""
     return float("0" + tok) if tok.startswith(".") else float(tok)
 
 
 def _group(timeframe: str) -> str:
+    """Return the SQL GROUP BY columns for season (per player-year) or career (per player)."""
     return '"playerID", "yearID"' if timeframe.lower() == "season" else '"playerID"'
 
 
@@ -79,32 +81,32 @@ def classify_position(text: str) -> Condition | None:
 
 
 def classify_stat(text: str) -> Condition | None:
-    # Compound first ("30+ HR / 30+ SB Season Batting").
-    cm = _COMPOUND_RE.search(text)
-    if cm:
-        v1, s1, v2, s2, tf = cm.groups()
-        l1 = lookups.STAT_LOOKUP.get(s1.upper())
-        l2 = lookups.STAT_LOOKUP.get(s2.upper())
-        if not (l1 and l2 and l1["kind"] == "count" and l2["kind"] == "count"):
+    # Compound stat first ("30+ HR / 30+ SB Season Batting").
+    compound_match = _COMPOUND_RE.search(text)
+    if compound_match:
+        threshold1, stat_tok1, threshold2, stat_tok2, timeframe = compound_match.groups()
+        stat1 = lookups.STAT_LOOKUP.get(stat_tok1.upper())
+        stat2 = lookups.STAT_LOOKUP.get(stat_tok2.upper())
+        if not (stat1 and stat2 and stat1["kind"] == "count" and stat2["kind"] == "count"):
             return None
         return Condition(
             "stat", "stat_compound",
-            fields={"table": l1["table"], "group": _group(tf),
-                    "col1": l1["col"], "col2": l2["col"]},
-            params={"v1": _parse_value(v1), "v2": _parse_value(v2)},
+            fields={"table": stat1["table"], "group": _group(timeframe),
+                    "col1": stat1["col"], "col2": stat2["col"]},
+            params={"v1": _parse_value(threshold1), "v2": _parse_value(threshold2)},
         )
 
     if not re.search(r"\b(Season|Career)\b", text, re.I):
         return None
-    m = _STAT_RE.search(text)
-    if not m:
+    stat_match = _STAT_RE.search(text)
+    if not stat_match:
         return None
-    val_tok, stat_tok, tf = m.groups()
+    threshold_tok, stat_tok, timeframe = stat_match.groups()
     stat = lookups.STAT_LOOKUP.get(stat_tok.upper())
     if not stat:
         return None
-    value = _parse_value(val_tok)
-    group = _group(tf)
+    value = _parse_value(threshold_tok)
+    group = _group(timeframe)
 
     if stat["kind"] == "count":
         return Condition(
@@ -114,8 +116,8 @@ def classify_stat(text: str) -> Condition | None:
             params={"value": value},
         )
     # Rate stat (AVG / ERA) with a playing-time floor. The floor is a prebuilt
-    # clause so the engine can drop it wholesale for sort=irrelevant.
-    floor = stat["floor_season"] if tf.lower() == "season" else stat["floor_career"]
+    # clause so the engine can drop it wholesale in obscure mode.
+    floor = stat["floor_season"] if timeframe.lower() == "season" else stat["floor_career"]
     floor_clause = f'AND SUM("{stat["floor_col"]}") >= {floor}'
     return Condition(
         "stat", "stat_rate",
