@@ -1,8 +1,14 @@
-# lahman-api
+# brennanhurdgmail
 
-REST API that answers [Immaculate Grid](https://www.immaculategrid.com) cells using the [Lahman Baseball Database](http://www.seanlahman.com). Given a two-condition question like `"Boston Red Sox + Gold Glove"`, it returns a ranked list of qualifying players.
+Backend for [Utility Man](https://chromewebstore.google.com/detail/utility-man/odpgppmidhpfpjdkoikeheciidiokomd), a Chrome extension that auto-solves [Immaculate Grid](https://www.immaculategrid.com) puzzles. Given a two-condition question like `"Boston Red Sox + Gold Glove"`, it returns a ranked list of qualifying players.
 
-Used by the `im-grid-slvr-extension` Chrome extension.
+## Components
+
+### brennanhurdgmail
+FastAPI service that classifies questions and queries the database. Runs at `brennanhurdgmail.com`.
+
+### lahman-db
+Self-contained, self-hosted Postgres image built from the [Lahman Baseball Database](http://www.seanlahman.com) (1871–2025). The CSV data is baked directly into the image at build time — no external seed step needed. Can be run independently as a local baseball database.
 
 ## Quick start
 
