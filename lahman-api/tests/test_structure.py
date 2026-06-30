@@ -46,7 +46,7 @@ def results(run):
 def test_answerable_rate(results):
     answered = sum(1 for _, cat, players in results if cat != "unmatched" and len(players) > 0)
     rate = answered / len(results)
-    assert rate >= 0.8, f"Only {answered}/{len(results)} questions answered ({rate:.0%})"
+    assert rate >= 0.95, f"Only {answered}/{len(results)} questions answered ({rate:.0%})"
 
 
 def test_names_are_complete(results):

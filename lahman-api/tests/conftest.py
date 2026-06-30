@@ -29,8 +29,12 @@ def run(conn):
         sql, params, category = engine.build(question, limit, obscure)
         if sql is None:
             return category, []
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(sql, params)
-            return category, cur.fetchall()
+        try:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(sql, params)
+                return category, cur.fetchall()
+        except Exception:
+            conn.rollback()
+            raise
 
     return _run

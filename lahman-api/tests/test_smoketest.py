@@ -1,11 +1,13 @@
 """Corpus-driven smoketest.
 
-Runs every question from the scraped Immaculate Grid corpus through
-engine.build() (pure Python, no DB round-trip) and reports which questions
-classify successfully vs. which are unmatched.
+Runs every question from the scraped Immaculate Grid corpus through the full
+pipeline (classify → SQL → DB execution) and asserts that each classified
+question returns at least one player.
 
 Unmatched questions are SKIPPED (not failures) — some conditions in the corpus
 (WAR, Negro League, etc.) are intentionally unsupported.
+
+Requires the stack to be up (make up).
 
 Run:
     uv run pytest tests/test_smoketest.py -v          # one line per question
@@ -18,8 +20,6 @@ import json
 from pathlib import Path
 
 import pytest
-
-from app import engine
 
 _CORPUS = Path(__file__).parent / "corpus" / "all_grid_questions.json"
 
@@ -42,11 +42,12 @@ def _load_cases():
     _load_cases(),
     ids=[f"game_{gid}-{q}" for gid, q in _load_cases()],
 )
-def test_smoketest(game_id, question):
-    """Question must classify to a known category (not 'unmatched')."""
-    _sql, _params, category = engine.build(question)
+def test_smoketest(run, game_id, question):
+    """Classified questions must return at least one player from the DB."""
+    category, players = run(question)
 
     if category == "unmatched":
         pytest.skip(f"unmatched: {question!r}")
 
     assert category != "error", f"engine error for {question!r}"
+    assert len(players) > 0, f"empty result set for classified question {question!r}"
